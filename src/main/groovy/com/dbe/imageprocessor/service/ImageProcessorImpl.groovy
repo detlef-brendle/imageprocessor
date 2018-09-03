@@ -10,7 +10,7 @@ class ImageProcessorImpl implements ImageProcessor {
     @Override
     Map<Color, Long> groupColors(BufferedImage image, Integer colorCount) {
         Map<Color, Long> colorsMap = [:]
-        def distance = 100
+        def distance = 51
         def checkedDistance = []
         while (colorsMap.size() != colorCount) {
             println "check with distance $distance"
@@ -67,7 +67,9 @@ class ImageProcessorImpl implements ImageProcessor {
                 def sourceRGB = image.getRGB(w, h)
                 def newColor
                 if (!colorsCache.containsKey(sourceRGB)) {
-                    newColor = findNearestNewColor(targetColors.keySet(), sourceRGB)
+                    Color sourceColor = new Color(sourceRGB)
+                    targetColors = targetColors.sort({ c -> compareColors(c.key, sourceColor) })
+                    newColor = targetColors.keySet()[0].getRGB()
                 } else {
                     newColor = colorsCache.get(sourceRGB)
                 }
@@ -78,6 +80,9 @@ class ImageProcessorImpl implements ImageProcessor {
         return img
     }
 
+    int compareColors(Color sourceColor, Color c) {
+        sqrt(pow(c.red - sourceColor.red, 2) + pow(c.green - sourceColor.green, 2) + pow(c.blue - sourceColor.blue, 2))
+    }
 
     @Override
     BufferedImage generateMinimalBlocks(BufferedImage bufferedImage, int x, int y) {
@@ -87,22 +92,6 @@ class ImageProcessorImpl implements ImageProcessor {
                 bufferedImage.getRGB(w, h)
             }
         }
-    }
-
-    private findNearestNewColor(Set<Color> targetColors, int color) {
-        Color nearestTargetColor = null;
-        Integer nearestDistance = new Integer(Integer.MAX_VALUE)
-        Color sourceColor = new Color(color)
-        targetColors.each { Color c ->
-            def distance = sqrt(pow(c.red - sourceColor.red, 2) + pow(c.green - sourceColor.green, 2) + pow(c.blue - sourceColor.blue, 2))
-
-            if (nearestDistance > distance) {
-                nearestTargetColor = c
-                nearestDistance = distance
-            }
-        }
-
-        return nearestTargetColor.RGB
     }
 
     BufferedImage drawLines(BufferedImage image) {
